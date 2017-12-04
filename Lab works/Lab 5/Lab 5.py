@@ -62,28 +62,70 @@ lam = 0.5 * ( (1 / xAver) + (1 / sigma) )
 print("Lambda =", lam)
 
 # Table with probabilities
-
 pTab = tt.Texttable()
 
-pTab.add_row( ["X", "x[i]", "x[i + 1]", "-lambda[x[i]]", "-lambda[x[i + 1]]", "e ^ -lambda[x[i]]"
-             , "e ^ -lambda[x[i + 1]]", "p[i]", "theoretical m[i]", "m", "(m[t]^T - m) ^ 2 / m[t]^T"])
+pTab.add_row( ["X", "x[i]", "x[i + 1]", "-lambda[x[i]]", "-lambda * x[i + 1]", "e ^ -lambda * x[i]"
+             , "e ^ -lambda * x[i + 1]", "p[i]", "theoretical m[i]", "m", "(m[t]^T - m) ^ 2 / m[t]^T"])
+
 
 sumLeftX  = 0
 sumRightX = 0
+
+mLambdaMultX    = len(xArr) * [0]
+sumMLambdaMultX = 0
+
+mLambdaMultXPO    = len(xArr) * [0]
+sumMLambdaMultXPO = 0
+
+expLXList = len(xArr) * [0]
+sumExpLXList = 0
+
+expLXPOList = len(xArr) * [0]
+sumExpLXPOList = 0
+
+pList = len(xArr) * [0]
+sumP = 0
+
+theoreticalMList = len(xArr) * [0]
+sumTheoreticalM = 0
+
+criteriaList = len(xArr) * [0]
 criteriaSum = 0
+
 
 for i in range(0, len(xArrStr)):
   sumLeftX  += xArr[i][0]
   sumRightX += xArr[i][len(xArr[i]) - 1]
 
-  # teoreticalM = probability * sumMArr
-  # criteria = ((teoreticalM - mArr[i]) ** 2) / teoreticalM
-  # criteriaSum += criteria
+  mLambdaMultX[i] = -lam * xArr[i][0]
+  sumMLambdaMultX += mLambdaMultX[i]
 
-  pTab.add_row([xArrStr[i]] + xArrStr[i].split("-") + (6 * [""]) + # TODO : get to know how to count these lambdas, p[i]
-               [mArr[i]] + [""])
+  mLambdaMultXPO[i] = -lam * xArr[i][len(xArr[i]) - 1]
+  sumMLambdaMultXPO += mLambdaMultXPO[i]
 
-# pTab.add_row(["Sum"] + )
+  expLXList[i] = mt.exp(mLambdaMultX[i])
+  sumExpLXList += expLXList[i]
+
+  expLXPOList[i] = mt.exp(mLambdaMultXPO[i])
+  sumExpLXPOList += expLXPOList[i]
+
+  pList[i] = expLXList[i] - expLXPOList[i]
+  sumP += pList[i]
+
+  theoreticalMList[i] = pList[i] * sumMArr
+  sumTheoreticalM += theoreticalMList[i]
+
+  criteriaList[i] = ((theoreticalMList[i] - mArr[i]) ** 2) / theoreticalMList[i]
+  criteriaSum += criteriaList[i]
+
+
+  pTab.add_row([xArrStr[i]] + xArrStr[i].split("-") + [mLambdaMultX[i]] +
+               [mLambdaMultXPO[i]] + [expLXList[i]] + [expLXPOList[i]] +
+               [pList[i]] + [theoreticalMList[i]] + [mArr[i]] + [criteriaList[i]])
+
+pTab.add_row(["Sum"] + [sumLeftX] + [sumRightX] + [sumMLambdaMultX] +
+             [sumMLambdaMultXPO] + [sumExpLXList] + [sumExpLXPOList] +
+             [sumP] + [sumTheoreticalM] + [sumMArr] + [criteriaSum])
 
 pTab.set_cols_width(11 * [10])
 printPTab = pTab.draw()
